@@ -8,5 +8,7 @@ namespace Task1.Data
 
         public DbSet<Credentials> Credential { get; set; }
 
+        public DbSet<Employees> Employee { get; set; }
+
     }
 }
