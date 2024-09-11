@@ -1,6 +1,10 @@
-@Task1_HostAddress = http://localhost:5008
+@Task1_HostAddress = https://localhost:7216
 
 GET {{Task1_HostAddress}}/weatherforecast/
 Accept: application/json
+
+###
+
+GET {{Task1_HostAddress}}/api/credential
 
 ###
