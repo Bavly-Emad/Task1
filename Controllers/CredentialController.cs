@@ -5,6 +5,12 @@ using Task1.Models;
 using Task1.Data;
 using Task1.Models;
 using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace Task1.Controllers
 {
@@ -13,9 +19,11 @@ namespace Task1.Controllers
     public class CredentialController : ControllerBase
     {
         private readonly DBContext cntxt;
-        public CredentialController(DBContext context)
+        private readonly IConfiguration cnfig;
+        public CredentialController(DBContext context, IConfiguration configuration)
         {
             cntxt = context;
+            cnfig = configuration;
         }
 
         /*
@@ -76,14 +84,53 @@ namespace Task1.Controllers
         }
         */
 
+        [HttpGet("Login")]
+        public IActionResult Login(string Username, string Password)
+        {
+            var user = cntxt.Credential.SingleOrDefault(u => u.Email == Username && u.Password == Password);
+            if (user != null)
+            {
+                var token = GenerateJwtToken(Username);
+                return Ok(new { token });
+            }
+            return Unauthorized();
+        }
+
+        private string GenerateJwtToken(string username)
+        {
+            List<Claim> claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, username)
+            };
+
+            //var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("The Top Secret Key for Hashing The Credentials In The App"));
+            var securityKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(cnfig.GetSection("AppSettings:Token").Value));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            /*var claims = new[]
+            {
+            new Claim(JwtRegisteredClaimNames.Sub, username),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };*/
+
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(30),
+                signingCredentials: credentials);
+
+            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return jwt;
+        }
+
         //Employee CRUD Operations
-        [HttpGet]
+        [HttpGet, Authorize]
         public async Task<ActionResult<List<Employees>>> GetEmployees()
         {
             return await cntxt.Employee.Include(e => e.Credential).ToListAsync();
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}"), Authorize]
         public async Task<ActionResult<Employees>> GetEmployee(int id)
         {
             var employee = await cntxt.Employee.Include(e => e.Credential).FirstOrDefaultAsync(e => e.ID == id);
@@ -96,7 +143,7 @@ namespace Task1.Controllers
             return employee;
         }
 
-        [HttpPost]
+        [HttpPost, Authorize]
         public async Task<ActionResult<Employees>> PostEmployee(Employees employee)
         {
             cntxt.Employee.Add(employee);
@@ -105,7 +152,7 @@ namespace Task1.Controllers
             return CreatedAtAction(nameof(GetEmployee), new { id = employee.ID }, employee);
         }
         
-        [HttpPut("{id}")]
+        [HttpPut("{id}"), Authorize]
         public async Task<IActionResult> PutEmployee(int id, Employees employee)
         {
             if (id != employee.ID)
@@ -134,7 +181,7 @@ namespace Task1.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}"), Authorize]
         public async Task<IActionResult> DeleteEmployee(int id)
         {
             var employee = await cntxt.Employee.FindAsync(id);
@@ -154,7 +201,7 @@ namespace Task1.Controllers
             return cntxt.Employee.Any(e => e.ID == id);
         }
 
-        [HttpPost("{id}/Credentials")]
+        [HttpPost("{id}/Credentials"), Authorize]
         public async Task<ActionResult<Credential>> AddCredential(int id, Credentials credential)
         {
             var employee = await cntxt.Employee.FindAsync(id);
@@ -170,7 +217,7 @@ namespace Task1.Controllers
             return CreatedAtAction(nameof(GetEmployee), new { id = employee.ID }, credential);
         }
 
-        [HttpDelete("{employeeId}/Credentials/{credentialId}")]
+        [HttpDelete("{employeeId}/Credentials/{credentialId}"), Authorize]
         public async Task<IActionResult> RemoveCredential(int employeeId, int credentialId)
         {
             var credential = await cntxt.Credential.FindAsync(credentialId);
