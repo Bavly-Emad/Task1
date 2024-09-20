@@ -71,9 +71,9 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddAuthorization();
 
-//builder.Logging.ClearProviders();
+builder.Logging.ClearProviders();
 
-//builder.Logging.AddConsole();
+builder.Logging.AddConsole();
 
 /*
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

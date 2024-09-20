@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using Microsoft.EntityFrameworkCore;
 using Task1.Models;
 using Task1.Data;
@@ -20,7 +22,7 @@ namespace Task1.Controllers
     {
         private readonly DBContext cntxt;
         private readonly IConfiguration cnfig;
-        private readonly ILogger lger;
+        private readonly ILogger<CredentialController> lger;
         public CredentialController(DBContext context, IConfiguration configuration, ILogger<CredentialController> logger)
         {
             cntxt = context;
@@ -92,6 +94,7 @@ namespace Task1.Controllers
             var user = cntxt.Credential.SingleOrDefault(u => u.Email == Username && u.Password == Password);
             if (user != null)
             {
+                lger.LogInformation("\nLogged In Successfully\n");
                 var token = GenerateJwtToken(Username);
                 return Ok(new { token });
             }
@@ -135,8 +138,8 @@ namespace Task1.Controllers
         [HttpGet, Authorize(Roles = "Admin")]
         public async Task<ActionResult<List<Departments>>> GetEmployees()
         {
+            lger.LogInformation("\nAll Departments & Employees Included Had Been Retrieved After Departments Endpoint Was Called\n");
             return await cntxt.Department.Include(e => e.Employee).ThenInclude(e => e.Credential).ToListAsync();
-            //lger.LogInformation("All Departments & Employees Included Had Been Retrieved After Departments Endpoint Was Called");
         }
 
         [HttpGet("{id}"), Authorize]
@@ -155,6 +158,8 @@ namespace Task1.Controllers
                 Department_Name = employee.Department_Name
             };
 
+            lger.LogInformation("\nEmployee's Name and his Department name have been retrieved Successfully\n");
+
             return Ok(result);
         }
 
@@ -163,7 +168,7 @@ namespace Task1.Controllers
         {
             cntxt.Employee.Add(employee);
             await cntxt.SaveChangesAsync();
-
+            lger.LogInformation("\nEmployee has been Added successfully\n");
             return CreatedAtAction(nameof(GetEmployee), new { id = employee.ID }, employee);
         }
         
@@ -180,6 +185,7 @@ namespace Task1.Controllers
             try
             {
                 await cntxt.SaveChangesAsync();
+                lger.LogInformation("\nEmployee has been Updated successfully\n");
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -207,7 +213,7 @@ namespace Task1.Controllers
 
             cntxt.Employee.Remove(employee);
             await cntxt.SaveChangesAsync();
-
+            lger.LogInformation("\nEmployee has been Deleted successfully\n");
             return NoContent();
         }
 
@@ -228,7 +234,7 @@ namespace Task1.Controllers
             credential.ID = id;
             cntxt.Credential.Add(credential);
             await cntxt.SaveChangesAsync();
-
+            lger.LogInformation("\nEmployee's Credentials have been Added successfully\n");
             return CreatedAtAction(nameof(GetEmployee), new { id = employee.ID }, credential);
         }
 
@@ -243,7 +249,7 @@ namespace Task1.Controllers
 
             cntxt.Credential.Remove(credential);
             await cntxt.SaveChangesAsync();
-
+            lger.LogInformation("\nEmployee's Credentials have been Deleted successfully\n");
             return NoContent();
         }
     }
