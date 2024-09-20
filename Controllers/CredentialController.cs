@@ -20,10 +20,12 @@ namespace Task1.Controllers
     {
         private readonly DBContext cntxt;
         private readonly IConfiguration cnfig;
-        public CredentialController(DBContext context, IConfiguration configuration)
+        private readonly ILogger lger;
+        public CredentialController(DBContext context, IConfiguration configuration, ILogger<CredentialController> logger)
         {
             cntxt = context;
             cnfig = configuration;
+            lger = logger;
         }
 
         /*
@@ -103,9 +105,15 @@ namespace Task1.Controllers
                 new Claim(ClaimTypes.Name, username)
             };
 
-            //var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("The Top Secret Key for Hashing The Credentials In The App"));
+            var user = cntxt.Credential.FirstOrDefault(c => c.Email == username);
+
             var securityKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(cnfig.GetSection("AppSettings:Token").Value));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            if (user.IsAdmin)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+            }
 
             /*var claims = new[]
             {
@@ -124,10 +132,11 @@ namespace Task1.Controllers
         }
 
         //Employee CRUD Operations
-        [HttpGet, Authorize]
-        public async Task<ActionResult<List<Employees>>> GetEmployees()
+        [HttpGet, Authorize(Roles = "Admin")]
+        public async Task<ActionResult<List<Departments>>> GetEmployees()
         {
-            return await cntxt.Employee.Include(e => e.Credential).ToListAsync();
+            return await cntxt.Department.Include(e => e.Employee).ThenInclude(e => e.Credential).ToListAsync();
+            //lger.LogInformation("All Departments & Employees Included Had Been Retrieved After Departments Endpoint Was Called");
         }
 
         [HttpGet("{id}"), Authorize]
@@ -140,10 +149,16 @@ namespace Task1.Controllers
                 return NotFound();
             }
 
-            return employee;
+            var result = new Employees_Projection
+            {
+                Name = employee.Name,
+                Department_Name = employee.Department_Name
+            };
+
+            return Ok(result);
         }
 
-        [HttpPost, Authorize]
+        [HttpPost, Authorize(Roles = "Admin")]
         public async Task<ActionResult<Employees>> PostEmployee(Employees employee)
         {
             cntxt.Employee.Add(employee);
@@ -152,7 +167,7 @@ namespace Task1.Controllers
             return CreatedAtAction(nameof(GetEmployee), new { id = employee.ID }, employee);
         }
         
-        [HttpPut("{id}"), Authorize]
+        [HttpPut("{id}"), Authorize(Roles = "Admin")]
         public async Task<IActionResult> PutEmployee(int id, Employees employee)
         {
             if (id != employee.ID)
@@ -181,7 +196,7 @@ namespace Task1.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id}"), Authorize]
+        [HttpDelete("{id}"), Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteEmployee(int id)
         {
             var employee = await cntxt.Employee.FindAsync(id);

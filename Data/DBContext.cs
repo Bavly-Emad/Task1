@@ -10,5 +10,6 @@ namespace Task1.Data
 
         public DbSet<Employees> Employee { get; set; }
 
+        public DbSet<Departments> Department { get; set; }
     }
 }
