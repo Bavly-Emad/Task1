@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Security.Cryptography.Xml;
 using System.Text;
 using Task1.Data;
+using Task1.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 /*
@@ -17,7 +18,7 @@ builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Trace);
 */
 // Add services to the container.
-
+builder.Services.AddScoped<EmployeeServices>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

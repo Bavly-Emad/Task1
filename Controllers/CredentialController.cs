@@ -13,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Task1.Services;
 
 namespace Task1.Controllers
 {
@@ -20,14 +21,12 @@ namespace Task1.Controllers
     [ApiController]
     public class CredentialController : ControllerBase
     {
+        private readonly EmployeeServices empls;
         private readonly DBContext cntxt;
-        private readonly IConfiguration cnfig;
-        private readonly ILogger<CredentialController> lger;
-        public CredentialController(DBContext context, IConfiguration configuration, ILogger<CredentialController> logger)
+        public CredentialController(EmployeeServices employeeServices, DBContext db)
         {
-            cntxt = context;
-            cnfig = configuration;
-            lger = logger;
+            empls = employeeServices;
+            cntxt = db;
         }
 
         /*
@@ -91,61 +90,52 @@ namespace Task1.Controllers
         [HttpGet("Login")]
         public IActionResult Login(string Username, string Password)
         {
-            var user = cntxt.Credential.SingleOrDefault(u => u.Email == Username && u.Password == Password);
+            var user = empls.LoginAsync(Username, Password);
             if (user != null)
             {
-                lger.LogInformation("\nLogged In Successfully\n");
-                var token = GenerateJwtToken(Username);
-                return Ok(new { token });
+                return Ok(new { user });
             }
             return Unauthorized();
-        }
-
-        private string GenerateJwtToken(string username)
-        {
-            List<Claim> claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, username)
-            };
-
-            var user = cntxt.Credential.FirstOrDefault(c => c.Email == username);
-
-            var securityKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(cnfig.GetSection("AppSettings:Token").Value));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            if (user.IsAdmin)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
-            }
-
-            /*var claims = new[]
-            {
-            new Claim(JwtRegisteredClaimNames.Sub, username),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };*/
-
-            var token = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
-                signingCredentials: credentials);
-
-            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-
-            return jwt;
         }
 
         //Employee CRUD Operations
         [HttpGet, Authorize(Roles = "Admin")]
         public async Task<ActionResult<List<Departments>>> GetEmployees()
         {
-            lger.LogInformation("\nAll Departments & Employees Included Had Been Retrieved After Departments Endpoint Was Called\n");
-            return await cntxt.Department.Include(e => e.Employee).ThenInclude(e => e.Credential).ToListAsync();
+            return await empls.GetEmployeesAsync();
+        }
+
+        [HttpGet("Search")]
+        public async Task<ActionResult<IEnumerable<Employees>>> SearchEmployee([FromQuery] string name, [FromQuery] double? salary, [FromQuery] string projectname, [FromQuery] DateOnly? dateofbirth)
+        {
+            var query = cntxt.Employee.AsQueryable();
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                query = query.Where(e => e.Salary == salary.Value);
+            }
+
+            if (!string.IsNullOrEmpty(projectname))
+            {
+                query = query.Where(e => e.EP.Any(ep => ep.Project.Name.Contains(projectname)));
+            }
+
+            if(dateofbirth.HasValue)
+            {
+                query = query.Where(e => e.DateOfBirth == dateofbirth.Value);
+            }
+
+            //var empl = await query.Include(e => e.Credential).Include(e => e.EP).ThenInclude(ep => ep.Project).ToListAsync();
+
+            var empl = await query.Include(e => e.Credential).ToListAsync();
+
+            return empl;
         }
 
         [HttpGet("{id}"), Authorize]
         public async Task<ActionResult<Employees>> GetEmployee(int id)
         {
-            var employee = await cntxt.Employee.Include(e => e.Credential).FirstOrDefaultAsync(e => e.ID == id);
+            var employee = await empls.GetEmployeeAsync(id);
 
             if (employee == null)
             {
@@ -158,17 +148,13 @@ namespace Task1.Controllers
                 Department_Name = employee.Department_Name
             };
 
-            lger.LogInformation("\nEmployee's Name and his Department name have been retrieved Successfully\n");
-
             return Ok(result);
         }
 
         [HttpPost, Authorize(Roles = "Admin")]
         public async Task<ActionResult<Employees>> PostEmployee(Employees employee)
         {
-            cntxt.Employee.Add(employee);
-            await cntxt.SaveChangesAsync();
-            lger.LogInformation("\nEmployee has been Added successfully\n");
+            empls.PostEmployeeAsync(employee);
             return CreatedAtAction(nameof(GetEmployee), new { id = employee.ID }, employee);
         }
         
@@ -180,24 +166,7 @@ namespace Task1.Controllers
                 return BadRequest();
             }
 
-            cntxt.Entry(employee).State = EntityState.Modified;
-
-            try
-            {
-                await cntxt.SaveChangesAsync();
-                lger.LogInformation("\nEmployee has been Updated successfully\n");
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EmployeeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            empls.PutEmployeeAsync(employee);
 
             return NoContent();
         }
@@ -205,52 +174,39 @@ namespace Task1.Controllers
         [HttpDelete("{id}"), Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteEmployee(int id)
         {
-            var employee = await cntxt.Employee.FindAsync(id);
+            var employee = await empls.DeleteEmployeeAsync(id);
             if (employee == null)
             {
                 return NotFound();
             }
 
-            cntxt.Employee.Remove(employee);
-            await cntxt.SaveChangesAsync();
-            lger.LogInformation("\nEmployee has been Deleted successfully\n");
             return NoContent();
         }
-
-        private bool EmployeeExists(int id)
-        {
-            return cntxt.Employee.Any(e => e.ID == id);
-        }
-
+        /*
         [HttpPost("{id}/Credentials"), Authorize]
         public async Task<ActionResult<Credential>> AddCredential(int id, Credentials credential)
         {
-            var employee = await cntxt.Employee.FindAsync(id);
+            var employee = await empls.AddCredentialAsync(credential);
             if (employee == null)
             {
                 return NotFound();
             }
 
             credential.ID = id;
-            cntxt.Credential.Add(credential);
-            await cntxt.SaveChangesAsync();
-            lger.LogInformation("\nEmployee's Credentials have been Added successfully\n");
-            return CreatedAtAction(nameof(GetEmployee), new { id = employee.ID }, credential);
+
+            return CreatedAtAction(nameof(GetEmployee), new { id }, credential);
         }
 
         [HttpDelete("{employeeId}/Credentials/{credentialId}"), Authorize]
         public async Task<IActionResult> RemoveCredential(int employeeId, int credentialId)
         {
-            var credential = await cntxt.Credential.FindAsync(credentialId);
+            var credential = await empls.RemoveCredentialAsync(credentialId);
             if (credential == null || credential.ID != employeeId)
             {
                 return NotFound();
             }
 
-            cntxt.Credential.Remove(credential);
-            await cntxt.SaveChangesAsync();
-            lger.LogInformation("\nEmployee's Credentials have been Deleted successfully\n");
             return NoContent();
-        }
+        }*/
     }
 }

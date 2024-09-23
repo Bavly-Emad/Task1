@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Task1.Data;
 
@@ -11,9 +12,11 @@ using Task1.Data;
 namespace Task1.Migrations
 {
     [DbContext(typeof(DBContext))]
-    partial class DBContextModelSnapshot : ModelSnapshot
+    [Migration("20240923144621_Initial_5")]
+    partial class Initial_5
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -52,7 +55,7 @@ namespace Task1.Migrations
 
                     b.HasIndex("EmployeesID");
 
-                    b.ToTable("Credential", (string)null);
+                    b.ToTable("Credential");
                 });
 
             modelBuilder.Entity("Task1.Models.Departments", b =>
@@ -69,7 +72,7 @@ namespace Task1.Migrations
 
                     b.HasKey("ID");
 
-                    b.ToTable("Department", (string)null);
+                    b.ToTable("Department");
                 });
 
             modelBuilder.Entity("Task1.Models.EmployeeProject", b =>
@@ -84,7 +87,7 @@ namespace Task1.Migrations
 
                     b.HasIndex("ProjectID");
 
-                    b.ToTable("EmployeeProject", (string)null);
+                    b.ToTable("EmployeeProject");
                 });
 
             modelBuilder.Entity("Task1.Models.Employees", b =>
@@ -120,7 +123,7 @@ namespace Task1.Migrations
 
                     b.HasIndex("DepartmentsID");
 
-                    b.ToTable("Employee", (string)null);
+                    b.ToTable("Employee");
                 });
 
             modelBuilder.Entity("Task1.Models.Projects", b =>
@@ -137,7 +140,7 @@ namespace Task1.Migrations
 
                     b.HasKey("ID");
 
-                    b.ToTable("Project", (string)null);
+                    b.ToTable("Project");
                 });
 
             modelBuilder.Entity("Task1.Models.Credentials", b =>

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
+using System.ComponentModel.DataAnnotations;
 
 namespace Task1.Models
 {
@@ -16,8 +17,13 @@ namespace Task1.Models
         public int ID { get; set; }
         public required string Name { get; set; }
         public double Salary { get; set; }
+        [Display(Name = "Date Of Birth")]
+        [DataType(DataType.Date)]
+        public DateOnly DateOfBirth { get; set; }
+        public required string Project_Name { get; set; }
         public required string Department_Name { get; set; }
         public ICollection<Credentials> Credential { get; set; }
+        public ICollection<EmployeeProject> EP { get; set; }
     }
 
     public class Employees_Projection
@@ -31,5 +37,20 @@ namespace Task1.Models
         public int ID { get; set; }
         public required string Name { get; set; }
         public ICollection<Employees> Employee { get; set; }
+    }
+
+    public class Projects
+    {
+        public int ID { get; set; }
+        public required string Name { get; set; }
+        public ICollection<EmployeeProject> EP { get; set; }
+    }
+
+    public class EmployeeProject
+    {
+        public int EmployeeID { get; set; }
+        public Employees Employee { get; set; }
+        public int ProjectID { get; set; }
+        public Projects Project { get; set; }
     }
 }

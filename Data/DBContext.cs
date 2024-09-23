@@ -11,5 +11,23 @@ namespace Task1.Data
         public DbSet<Employees> Employee { get; set; }
 
         public DbSet<Departments> Department { get; set; }
+
+        public DbSet<Projects> Project { get; set; }
+
+        public DbSet<EmployeeProject> EmployeeProject { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Employees>().Property(a => a.DateOfBirth).HasColumnType("date");
+            modelBuilder.Entity<Employees>().Property(e => e.DateOfBirth).HasConversion(v => v.ToDateTime(TimeOnly.MinValue), v => DateOnly.FromDateTime(v));
+
+            modelBuilder.Entity<EmployeeProject>().HasKey(p => new { p.EmployeeID, p.ProjectID });
+            modelBuilder.Entity<EmployeeProject>().HasOne(a => a.Employee).WithMany(b => b.EP).HasForeignKey(c => c.EmployeeID);
+            modelBuilder.Entity<EmployeeProject>().HasOne(a => a.Project).WithMany(b => b.EP).HasForeignKey(c => c.ProjectID);
+
+            /*modelBuilder.Entity<Employees>().HasMany(a => a.Project).WithMany(b => b.Employee).UsingEntity<Dictionary<string, object>>(
+                "EmployeeProject", c => c.HasOne<Projects>().WithMany().HasForeignKey("ID"), c => c.HasOne<Employees>().WithMany().HasForeignKey("ID")
+                );*/
+        }
     }
 }
