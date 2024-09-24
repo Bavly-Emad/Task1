@@ -155,7 +155,7 @@ namespace Task1.Controllers
         [HttpPost, Authorize(Roles = "Admin")]
         public async Task<ActionResult<Employees>> PostEmployee(Employees employee)
         {
-            empls.PostEmployeeAsync(employee);
+            await empls.PostEmployeeAsync(employee);
             return CreatedAtAction(nameof(GetEmployee), new { id = employee.ID }, employee);
         }
         
@@ -167,7 +167,7 @@ namespace Task1.Controllers
                 return BadRequest();
             }
 
-            empls.PutEmployeeAsync(employee);
+            await empls.PutEmployeeAsync(employee);
 
             return NoContent();
         }
@@ -176,18 +176,19 @@ namespace Task1.Controllers
         public async Task<IActionResult> DeleteEmployee(int id)
         {
             var employee = await empls.DeleteEmployeeAsync(id);
-            if (employee == null)
+            if (employee == false)
             {
                 return NotFound();
             }
 
             return NoContent();
         }
-        /*
+        
         [HttpPost("{id}/Credentials"), Authorize]
         public async Task<ActionResult<Credential>> AddCredential(int id, Credentials credential)
         {
             var employee = await empls.AddCredentialAsync(credential);
+
             if (employee == null)
             {
                 return NotFound();
@@ -195,19 +196,20 @@ namespace Task1.Controllers
 
             credential.ID = id;
 
-            return CreatedAtAction(nameof(GetEmployee), new { id }, credential);
+            return CreatedAtAction(nameof(GetEmployee), new { id = employee }, credential);
         }
 
         [HttpDelete("{employeeId}/Credentials/{credentialId}"), Authorize]
         public async Task<IActionResult> RemoveCredential(int employeeId, int credentialId)
         {
             var credential = await empls.RemoveCredentialAsync(credentialId);
-            if (credential == null || credential.ID != employeeId)
+
+            if (credential == null || credential != employeeId)
             {
                 return NotFound();
             }
 
             return NoContent();
-        }*/
+        }
     }
 }

@@ -66,11 +66,11 @@ namespace Task1.Services
 
         public async Task<List<Departments>> GetEmployeesAsync()
         {
-            return await cntxt.Department.Include(e => e.Employee).ThenInclude(e => e.Credential).ToListAsync();
             lger.LogInformation("\nAll Departments & Employees Included Had Been Retrieved After Departments Endpoint Was Called\n");
+            return await cntxt.Department.Include(e => e.Employee).ThenInclude(e => e.Credential).ToListAsync();
         }
 
-        public async Task<Employees> GetEmployeeAsync(int id)
+        public async Task<Employees?> GetEmployeeAsync(int id)
         {
             return await cntxt.Employee.Include(e => e.Credential).FirstOrDefaultAsync(e => e.ID == id);
         }
@@ -122,22 +122,26 @@ namespace Task1.Services
         {
             return await cntxt.Employee.AnyAsync(e => e.ID == id);
         }
-        /*
-        public async Task<IActionResult<Credential>> AddCredentialAsync(Credentials credential)
+        
+        public async Task<int> AddCredentialAsync(Credentials credential)
         {
             cntxt.Credential.Add(credential);
             await cntxt.SaveChangesAsync();
             lger.LogInformation("\nEmployee's Credentials have been Added successfully\n");
-            return credential;
+            return credential.ID;
         }
 
-        public async Task<bool> RemoveCredentialAsync(int credentialId)
+        public async Task<int?> RemoveCredentialAsync(int credentialId)
         {
             var credential = await cntxt.Credential.FindAsync(credentialId);
+            if (credential == null)
+            {
+                return null;
+            }
             cntxt.Credential.Remove(credential);
             await cntxt.SaveChangesAsync();
             lger.LogInformation("\nEmployee's Credentials have been Deleted successfully\n");
-            return true;
-        }*/
+            return credential.ID;
+        }
     }
 }
