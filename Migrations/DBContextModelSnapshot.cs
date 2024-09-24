@@ -22,6 +22,21 @@ namespace Task1.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("EmployeeProject", b =>
+                {
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.HasKey("EmployeeId", "ProjectId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("EmployeeProject");
+                });
+
             modelBuilder.Entity("Task1.Models.Credentials", b =>
                 {
                     b.Property<int>("ID")
@@ -52,7 +67,7 @@ namespace Task1.Migrations
 
                     b.HasIndex("EmployeesID");
 
-                    b.ToTable("Credential", (string)null);
+                    b.ToTable("Credential");
                 });
 
             modelBuilder.Entity("Task1.Models.Departments", b =>
@@ -69,22 +84,7 @@ namespace Task1.Migrations
 
                     b.HasKey("ID");
 
-                    b.ToTable("Department", (string)null);
-                });
-
-            modelBuilder.Entity("Task1.Models.EmployeeProject", b =>
-                {
-                    b.Property<int>("EmployeeID")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProjectID")
-                        .HasColumnType("int");
-
-                    b.HasKey("EmployeeID", "ProjectID");
-
-                    b.HasIndex("ProjectID");
-
-                    b.ToTable("EmployeeProject", (string)null);
+                    b.ToTable("Department");
                 });
 
             modelBuilder.Entity("Task1.Models.Employees", b =>
@@ -95,7 +95,7 @@ namespace Task1.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
-                    b.Property<DateOnly>("DateOfBirth")
+                    b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("date");
 
                     b.Property<string>("Department_Name")
@@ -120,7 +120,7 @@ namespace Task1.Migrations
 
                     b.HasIndex("DepartmentsID");
 
-                    b.ToTable("Employee", (string)null);
+                    b.ToTable("Employee");
                 });
 
             modelBuilder.Entity("Task1.Models.Projects", b =>
@@ -137,7 +137,22 @@ namespace Task1.Migrations
 
                     b.HasKey("ID");
 
-                    b.ToTable("Project", (string)null);
+                    b.ToTable("Project");
+                });
+
+            modelBuilder.Entity("EmployeeProject", b =>
+                {
+                    b.HasOne("Task1.Models.Employees", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Task1.Models.Projects", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Task1.Models.Credentials", b =>
@@ -145,25 +160,6 @@ namespace Task1.Migrations
                     b.HasOne("Task1.Models.Employees", null)
                         .WithMany("Credential")
                         .HasForeignKey("EmployeesID");
-                });
-
-            modelBuilder.Entity("Task1.Models.EmployeeProject", b =>
-                {
-                    b.HasOne("Task1.Models.Employees", "Employee")
-                        .WithMany("EP")
-                        .HasForeignKey("EmployeeID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Task1.Models.Projects", "Project")
-                        .WithMany("EP")
-                        .HasForeignKey("ProjectID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Employee");
-
-                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("Task1.Models.Employees", b =>
@@ -181,13 +177,6 @@ namespace Task1.Migrations
             modelBuilder.Entity("Task1.Models.Employees", b =>
                 {
                     b.Navigation("Credential");
-
-                    b.Navigation("EP");
-                });
-
-            modelBuilder.Entity("Task1.Models.Projects", b =>
-                {
-                    b.Navigation("EP");
                 });
 #pragma warning restore 612, 618
         }

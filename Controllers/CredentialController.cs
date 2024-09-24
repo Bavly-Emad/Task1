@@ -104,7 +104,7 @@ namespace Task1.Controllers
         {
             return await empls.GetEmployeesAsync();
         }
-
+        
         [HttpGet("Search")]
         public async Task<ActionResult<IEnumerable<Employees>>> SearchEmployee([FromQuery] string name, [FromQuery] double? salary, [FromQuery] string projectname, [FromQuery] DateOnly? dateofbirth)
         {
@@ -112,24 +112,25 @@ namespace Task1.Controllers
 
             if (!string.IsNullOrEmpty(name))
             {
+                query = query.Where(e => e.Name.Contains(name));
+            }
+
+            if (salary.HasValue)
+            {
                 query = query.Where(e => e.Salary == salary.Value);
             }
 
             if (!string.IsNullOrEmpty(projectname))
             {
-                query = query.Where(e => e.EP.Any(ep => ep.Project.Name.Contains(projectname)));
+                query = query.Where(e => e.Project.Any(p => p.Name.Contains(projectname)));
             }
 
-            if(dateofbirth.HasValue)
+            if (dateofbirth.HasValue)
             {
                 query = query.Where(e => e.DateOfBirth == dateofbirth.Value);
             }
 
-            //var empl = await query.Include(e => e.Credential).Include(e => e.EP).ThenInclude(ep => ep.Project).ToListAsync();
-
-            var empl = await query.Include(e => e.Credential).ToListAsync();
-
-            return empl;
+            return await query.Include(e => e.Project).ToListAsync();
         }
 
         [HttpGet("{id}"), Authorize]

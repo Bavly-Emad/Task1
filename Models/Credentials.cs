@@ -23,7 +23,7 @@ namespace Task1.Models
         public required string Project_Name { get; set; }
         public required string Department_Name { get; set; }
         public ICollection<Credentials> Credential { get; set; }
-        public ICollection<EmployeeProject> EP { get; set; }
+        public ICollection<Projects> Project { get; set; }
     }
 
     public class Employees_Projection
@@ -43,14 +43,6 @@ namespace Task1.Models
     {
         public int ID { get; set; }
         public required string Name { get; set; }
-        public ICollection<EmployeeProject> EP { get; set; }
-    }
-
-    public class EmployeeProject
-    {
-        public int EmployeeID { get; set; }
-        public Employees Employee { get; set; }
-        public int ProjectID { get; set; }
-        public Projects Project { get; set; }
+        public ICollection<Employees> Employee { get; set; }
     }
 }

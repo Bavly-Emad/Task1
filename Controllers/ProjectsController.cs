@@ -17,15 +17,15 @@ namespace Task1.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Projects>>> GetProjects()
+        public async Task<ActionResult<List<Projects>>> GetProjects()
         {
-            return await cntxt.Project.Include(e => e.EP).ThenInclude(ep => ep.Employee).ToListAsync();
+            return await cntxt.Project.Include(e => e.Employee).ToListAsync();
         }
 
         [HttpGet("{ID}")]
-        public async Task<ActionResult<IEnumerable<Projects>>> GetProjects(int ID)
+        public async Task<ActionResult<List<Projects>>> GetProjects(int ID)
         {
-            var proj = await cntxt.Project.FindAsync(ID);
+            var proj = await cntxt.Project.Include(e => e.Employee).FirstOrDefaultAsync(e => e.ID == ID);
 
             if (proj == null)
             {
