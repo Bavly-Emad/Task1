@@ -12,7 +12,7 @@ using Task1.Data;
 namespace Task1.Migrations
 {
     [DbContext(typeof(DBContext))]
-    [Migration("20240924145757_Initial_5")]
+    [Migration("20240925165949_Initial_5")]
     partial class Initial_5
     {
         /// <inheritdoc />

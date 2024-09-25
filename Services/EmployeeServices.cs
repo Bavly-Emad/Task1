@@ -64,6 +64,37 @@ namespace Task1.Services
             return jwt;
         }
 
+        public async Task<IEnumerable<Employees>> SearchEmployeeAsync([FromQuery] string name, [FromQuery] double? salary, [FromQuery] string projectname, [FromQuery] DateOnly? dateofbirth)
+        {
+            /*var query = cntxt.Employee.SingleOrDefault(u => u.Name == name && u.Salary == salary && u.Project_Name == projectname && u.DateOfBirth == dateofbirth);
+
+            return Ok(query);*/
+
+            var query = cntxt.Employee.AsQueryable();
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                query = query.Where(e => e.Name.Contains(name));
+            }
+
+            if (salary.HasValue)
+            {
+                query = query.Where(e => e.Salary == salary.Value);
+            }
+
+            if (!string.IsNullOrEmpty(projectname))
+            {
+                query = query.Where(e => e.Project.Any(p => p.Name.Contains(projectname)));
+            }
+
+            if (dateofbirth.HasValue)
+            {
+                query = query.Where(e => e.DateOfBirth == dateofbirth.Value);
+            }
+
+            return await query.Include(e => e.Project).ToListAsync();
+        }
+
         public async Task<List<Departments>> GetEmployeesAsync()
         {
             lger.LogInformation("\nAll Departments & Employees Included Had Been Retrieved After Departments Endpoint Was Called\n");
