@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Task1.Data;
-using Task1.Models;
+using Employees_Infrastructure.DataContext;
+using Employees_Domain.Entities;
 
 namespace Task1.Controllers
 {

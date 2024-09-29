@@ -8,8 +8,11 @@ using Swashbuckle.AspNetCore.Filters;
 using System.Data.Common;
 using System.Security.Cryptography.Xml;
 using System.Text;
-using Task1.Data;
-using Task1.Services;
+using Employees_Infrastructure.DataContext;
+using Employees_Application.Services;
+using Employees_Domain.Entities;
+using Microsoft.Extensions.Hosting;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 /*
@@ -19,17 +22,26 @@ builder.Logging.SetMinimumLevel(LogLevel.Trace);
 */
 // Add services to the container.
 builder.Services.AddScoped<EmployeeServices>();
+builder.Services.AddScoped<InactivatingUsers>();
+//builder.Services.AddHostedService<InactivatingUsers>();
+builder.Services.AddLogging();
+/*
+builder.Services.AddHangfire(config => config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHangfireServer();
+*/
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
 });
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<DBContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+    x => x.MigrationsAssembly("Employees_Infrastructure"));
 });
 
 builder.Services.AddAuthentication(options =>
@@ -118,9 +130,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+/*
+app.UseHangfireDashboard();
 
-//app.MapIdentityApi<IdentityUser>();
+app.UseHangfireServer();
 
+RecurringJob.AddOrUpdate<InactivatingUsers>("inactivate-incomplete-registrations", service => service.InavtivatingUsers(), Cron.Hourly);
+*/
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

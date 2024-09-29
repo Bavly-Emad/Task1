@@ -3,9 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.EntityFrameworkCore;
-using Task1.Models;
-using Task1.Data;
-using Task1.Models;
+using Employees_Domain.Entities;
+using Employees_Infrastructure.DataContext;
 using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
@@ -13,7 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Task1.Services;
+using Employees_Application.Services;
 
 namespace Task1.Controllers
 {
